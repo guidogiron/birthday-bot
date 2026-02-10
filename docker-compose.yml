@@ -1,0 +1,18 @@
+
+
+services:
+  birthday-bot:
+    build: .
+    image: birthday-bot:latest
+    container_name: birthday-bot
+    restart: "no"  # Don't restart automatically since it's a one-off script usually run on cron
+    env_file:
+      - .env
+    environment:
+      - TZ=America/New_York
+    mem_limit: 512m
+    mem_reservation: 128m
+    cpus: 0.5
+    # Optional: mount a volume if you want to inspect generated images on host
+    # volumes:
+    #   - ./output:/app/output

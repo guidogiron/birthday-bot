@@ -1,0 +1,35 @@
+# Secrets
+.env
+.env.*
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+.pytest_cache/
+
+# Local Generated Assets (don't copy test runs into image)
+combined_celebrations.*
+today_*.png
+mock_*.png
+output/
+
+# Test / Dev Scripts
+postcard/whatsapp_test_sender.py
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation & IDE
+*.md
+.idea/
+.vscode/
