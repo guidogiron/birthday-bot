@@ -273,10 +273,11 @@ def overlay_text_on_template(template_path, text, output_path):
         
         W, H = img.size
         
-        # Define safe text area (avoiding template title and footer)
-        # Top ~22% is template title, shifting up to center content better
-        y_start = int(H * 0.25)   # Adjusted to 25% as requested
-        y_end = int(H * 0.80)     # Adjusted to 80% as requested
+        # Define safe text area (avoiding template title, footer, and side edges)
+        x_margin = int(W * 0.05)  # 5% margin on each side (90% safe width)
+        available_width = W - (2 * x_margin)
+        y_start = int(H * 0.25)   # Top 25% is template title
+        y_end = int(H * 0.80)     # Bottom 20% is footer
         available_height = y_end - y_start
         
         # Split into lines but keep blank lines for section separation
@@ -289,23 +290,45 @@ def overlay_text_on_template(template_path, text, output_path):
         # Identify section headers (will be bold)
         section_headers = {"Cumpleaños", "Aniversario"}
         
-        # Calculate optimal font sizes based on available space
-        # Dynamic sizing based on number of lines
-        # Increased max size to 80 as requested
+        # Calculate optimal font sizes based on available vertical space
         base_font_size = min(100, max(30, int(available_height / (num_lines * 1.3))))
-        section_font_size = int(base_font_size * 1.2)  # Section headers slightly larger
-        name_font_size = base_font_size
-        date_font_size = int(base_font_size * 0.9)  # Date slightly smaller
         
-        try:
-            section_font = ImageFont.truetype(FONT_BOLD_PATH, section_font_size)
-            name_font = ImageFont.truetype(FONT_REGULAR_PATH, name_font_size)
-            date_font = ImageFont.truetype(FONT_REGULAR_PATH, date_font_size)
-        except Exception as e:
-            print(f"⚠️ Could not load Lora fonts, using default: {e}")
-            section_font = ImageFont.load_default()
-            name_font = ImageFont.load_default()
-            date_font = ImageFont.load_default()
+        # Now check horizontal fit and scale down if any line overflows
+        def _load_fonts(base_size):
+            """Load all fonts at sizes relative to the given base size."""
+            s_size = int(base_size * 1.2)
+            n_size = base_size
+            d_size = int(base_size * 0.9)
+            try:
+                sf = ImageFont.truetype(FONT_BOLD_PATH, s_size)
+                nf = ImageFont.truetype(FONT_REGULAR_PATH, n_size)
+                df = ImageFont.truetype(FONT_REGULAR_PATH, d_size)
+            except Exception as e:
+                print(f"⚠️ Could not load Lora fonts, using default: {e}")
+                sf = nf = df = ImageFont.load_default()
+            return sf, nf, df, s_size, n_size, d_size
+        
+        # Iteratively shrink fonts until all lines fit within available_width
+        while base_font_size >= 20:
+            section_font, name_font, date_font, section_font_size, name_font_size, date_font_size = _load_fonts(base_font_size)
+            
+            fits = True
+            for line in lines:
+                if not line.strip():
+                    continue
+                font = section_font if line in section_headers else name_font
+                bbox = draw.textbbox((0, 0), line, font=font)
+                text_width = bbox[2] - bbox[0]
+                if text_width > available_width:
+                    fits = False
+                    break
+            
+            if fits:
+                break
+            base_font_size -= 2  # Shrink by 2px and retry
+        
+        # Final load at the determined size
+        section_font, name_font, date_font, section_font_size, name_font_size, date_font_size = _load_fonts(base_font_size)
 
         # Calculate standard line heights for consistency
         # Using a reference string "Ag" to get a consistent height across all lines
