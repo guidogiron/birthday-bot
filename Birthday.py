@@ -361,7 +361,7 @@ def overlay_text_on_template(template_path, text, output_path):
             elif line in section_headers:
                 current_font = section_font
                 h = section_h
-                spacing_after = 8  # Less spacing after section headers
+                spacing_after = 12  # Spacing after section headers
             # Check if this is a blank line (section separator)
             elif line == "" or not line.strip():
                 # Skip blank lines but add extra spacing
