@@ -116,7 +116,7 @@ def get_birthdays_today():
     birthdays = []
 
     # Fetch people with birthdays
-    birthday_url = f"{base_url}/birthday_people"
+    birthday_url = f"{base_url}/lists/3074982/people"
     try:
         response = requests.get(birthday_url, auth=auth, timeout=30, verify=True)
     except requests.RequestException as e:
@@ -129,12 +129,13 @@ def get_birthdays_today():
         except ValueError:
             logging.error("Invalid JSON in birthday response")
             return birthdays
-        people_list = data.get('data', {}).get('attributes', {}).get('people', [])
+        people_list = data.get('data', [])
         if not isinstance(people_list, list):
             logging.error("Unexpected birthday response structure")
             return birthdays
         for person in people_list:
-            birthdate_str = person.get('birthdate')
+            attrs = person.get('attributes', {})
+            birthdate_str = attrs.get('birthdate')
             if birthdate_str:
                 bdate = None
                 for fmt in ('%Y-%m-%d', '%m-%d'):
@@ -144,7 +145,7 @@ def get_birthdays_today():
                     except ValueError:
                         continue
                 if bdate and bdate.month == month and bdate.day == day:
-                    birthdays.append({'name': person.get('name')})
+                    birthdays.append({'name': attrs.get('name')})
     else:
         logging.error(f"Error fetching birthdays: HTTP {response.status_code}")
     
